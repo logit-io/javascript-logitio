@@ -1,0 +1,35 @@
+{
+  "name": "javascript-logitio",
+  "version": "1.0.0",
+  "homepage": "http://logit.io",
+  "authors": [
+    "Matt Smith <mattonfoot@gmail.com>"
+  ],
+  "description": "javascript module to integrate with logit.io logging system",
+  "main": "./dist",
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals",
+    "node",
+    "yui"
+  ],
+  "keywords": [
+    "logit",
+    "io",
+    "logging",
+    "error",
+    "tracking",
+    "debugging"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "browser",
+    "lib",
+    "node_modules",
+    "bower_components",
+    "tasks",
+    "test"
+  ]
+}
