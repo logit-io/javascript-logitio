@@ -12,7 +12,6 @@ logs
 results
 coverage
 reports
-dist
 browser
 
 node_modules
