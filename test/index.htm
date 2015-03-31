@@ -4,6 +4,68 @@
   <meta charset="utf-8">
   <title>Logit IO javascript appender tests</title>
   <link rel="stylesheet" media="all" href="./mocha/mocha.css">
+  <style>
+
+  #mocha .suite {
+    margin: 24px 0;
+  }
+
+  #mocha .suite > ul {
+    margin-left: 24px;
+  }
+
+  #mocha .suite .test:before {
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  #mocha .test.pending:hover h2:after {
+    line-height: 0;
+    margin-left: 1em;
+  }
+
+  #mocha h1 {
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 24px;
+    margin: 24px 0;
+  }
+
+  #mocha h2 {
+    font-size: 16px;
+    line-height: 24px;
+    margin: 0;
+  }
+
+  #mocha .suite h1 {
+    font-size: 20px;
+  }
+
+  #mocha .suite h2 {
+    font-size: 18px;
+  }
+
+  #mocha .suite .suite h1 {
+    font-size: 18px;
+  }
+
+  #mocha .suite .suite h2 {
+    font-size: 16px;
+  }
+
+  #mocha .suite .suite .suite h1 {
+    font-size: 16px;
+  }
+
+  #mocha .suite .suite .suite h2 {
+    font-weight: normal;
+  }
+
+  #mocha .suite .suite .suite .suite h1 {
+    font-weight: normal;
+  }
+
+  </style>
 </head>
 <body>
   <div id="mocha"><p><a href="./index.htm">Index</a></p></div>
@@ -15,7 +77,7 @@
   <script src="./sinon-chai/lib/sinon-chai.js"></script>
   <script src="./json3/lib/json3.js"></script>
   <script src="./logit.js" data-cover></script>
-  <script>mocha.setup('bdd');</script>
+  <script>mocha.setup( 'bdd' );</script>
   <script src="./test.js"></script>
   <script>mocha.run();</script>
 </body>
