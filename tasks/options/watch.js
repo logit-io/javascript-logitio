@@ -1,16 +1,8 @@
 module.exports = function() {
 
-    return {
-
-        src: {
-            files: 'lib/**/*.js',
-            tasks: [ 'test', 'build' ]
-        }
-
-      , test: {
-            files: 'test/**/*.*',
-            tasks: [ 'build:test', 'test' ]
-        }
-    };
+  return {
+    files: [ 'lib/**/*.js', 'test/**/*.*' ],
+    tasks: [ 'test', 'build' ]
+  };
 
 };

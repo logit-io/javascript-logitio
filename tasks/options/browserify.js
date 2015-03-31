@@ -1,16 +1,15 @@
 module.exports = function() {
-    return {
+  return {
+    test: {
+      files: {
+        'browser/test.js': [ 'test/*.js' ]
+      }
+    },
 
-        test: {
-            files: {
-                'browser/test.js': [ 'test/*.js' ]
-            }
-        },
-
-        src: {
-          , files: {
-                'dist/logit.js': [ './lib/main.js' ]
-            }
-        }
-    };
+    src: {
+      files: {
+        'dist/logit.js': [ './lib/main.js' ]
+      }
+    }
+  };
 };

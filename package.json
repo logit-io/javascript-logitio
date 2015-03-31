@@ -52,7 +52,8 @@
     "mocha-lcov-reporter": "*",
     "sinon": "^1.14.1",
     "sinon-chai": "^2.7.0",
-    "travis-cov": "*"
+    "travis-cov": "*",
+    "xhr2": "^0.1.2"
   },
   "dependencies": {
     "json3": "^3.3.2"
