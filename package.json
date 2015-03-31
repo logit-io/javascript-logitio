@@ -9,7 +9,7 @@
     "error tracking",
     "debugging"
   ],
-  "main": "./dist",
+  "main": "./lib/main.js",
   "scripts": {
     "test": "./node_modules/grunt-cli/bin/grunt test",
     "coverage": "./node_modules/grunt-cli/bin/grunt coverage",

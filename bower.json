@@ -6,7 +6,7 @@
     "Matt Smith <mattonfoot@gmail.com>"
   ],
   "description": "javascript module to integrate with logit.io logging system",
-  "main": "./dist",
+  "main": "./dist/logit.js",
   "moduleType": [
     "amd",
     "es6",
