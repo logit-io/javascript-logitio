@@ -1,19 +1,40 @@
 module.exports = function( config ) {
 
-    return {
+  return {
 
-        dev: {
+    options: {
+      hostname: '*',
+      port: 9001,
+      base: [
+        './dist',
+        {
+          path: './test',
+          options: {
+            index: 'index.htm'
+          }
+        },
+        './browser',
+        './node_modules'
+      ],
+      debug: true
+    },
 
-            options: {
-                port: 9001,
-                useAvailablePort: true,
-                keepalive: true,
-                base: [ './dist', './test', './browser', './node_modules' ],
-                open: 'http://remotehost:9001'
-            }
+    dev: {
+      options: {
+        keepalive: true,
+        useAvailablePort: true,
+        open: true
+      }
+    },
 
-        }
+    test: {
+      options: {
+        keepalive: false,
+        useAvailablePort: false,
+        open: false
+      }
+    }
 
-    };
+  };
 
 };

@@ -3,12 +3,25 @@ var chai = require('chai');
 var should = chai.should();
 var expect = chai.expect;
 
+var console = console;
+if (!console) {
+  console = {
+    log: function() {},
+    error: function() {}
+  };
+}
+
 describe('Logit javascript appender', function() {
 
   beforeEach(function() {
     var fixture = this;
 
-    fixture.xhr = sinon.useFakeXMLHttpRequest();
+    if (!sinon.xhr.supportsCORS) {
+      fixture.xhr = sinon.useFakeXDomainRequest();
+    } else {
+      fixture.xhr = sinon.useFakeXMLHttpRequest();
+    }
+
     fixture.sandbox = sinon.sandbox.create();
 
     fixture.requests = [];
@@ -44,7 +57,7 @@ describe('Logit javascript appender', function() {
         window.logit.init( 'abc123' );
       });
 
-      this.requests.length.should.equal( 0 );
+      this.requests.should.have.length( 0 );
     });
 
     describe('logit.init', function() {
@@ -59,10 +72,9 @@ describe('Logit javascript appender', function() {
           window.logit.log( 'Not initialised, attempt' );
         });
 
-        console.log.should.not.have.been.called;
         console.error.should.have.been.called;
 
-        this.requests.length.should.equal( 0 );
+        this.requests.should.have.length( 0 );
       });
 
       it('No message can be sent to the logit.IO server until it is initialised', function() {
@@ -71,16 +83,16 @@ describe('Logit javascript appender', function() {
         });
 
         window.logit.log( 'Not initialised, attempt 1' );
-        this.requests.length.should.equal( 0 );
+        this.requests.should.have.length( 0 );
 
         window.logit.log( 'Not initialised, attempt 2' );
-        this.requests.length.should.equal( 0 );
+        this.requests.should.have.length( 0 );
 
         window.logit.init( 'abc123' );
 
         var msg = 'Sent to server!';
         window.logit.log( msg );
-        this.requests.length.should.equal( 1 );
+        this.requests.should.have.length( 1 );
 
         var data = JSON.parse( this.requests[ 0 ].requestBody );
         data.message.should.equal( msg );
@@ -121,24 +133,18 @@ describe('Logit javascript appender', function() {
 
           window.logit[ level ]( msg );
 
-          this.requests.length.should.equal( 1 );
+          this.requests.should.have.length( 1 );
 
           var data = JSON.parse( this.requests[ 0 ].requestBody );
           data.message.should.equal( msg );
           data.level.should.equal( level );
-
-          console.log.should.not.have.been.called;
-          console.error.should.not.have.been.called;
         });
 
         it('will ignore empty or undefined messages.', function() {
           window.logit[ level ]( '' );
           window.logit[ level ]();
 
-          this.requests.length.should.equal( 0 );
-
-          console.log.should.not.have.been.called;
-          console.error.should.not.have.been.called;
+          this.requests.should.have.length( 0 );
         });
       });
 
@@ -178,7 +184,7 @@ describe('Logit javascript appender', function() {
       it('will include the default dimensions in a message if none are set when sending messages to logit', function() {
         window.logit.log( 'message with dimensions' );
 
-        this.requests.length.should.equal( 1 );
+        this.requests.should.have.length( 1 );
 
         var data = JSON.parse( this.requests[ 0 ].requestBody );
         data.properties.should.deep.equal( options.defaultDimensions );
@@ -189,7 +195,7 @@ describe('Logit javascript appender', function() {
 
         window.logit.log( 'message with dimensions', messageDimension );
 
-        this.requests.length.should.equal( 1 );
+        this.requests.should.have.length( 1 );
 
         var data = JSON.parse( this.requests[ 0 ].requestBody );
         should.exist( data.properties.x );
@@ -207,7 +213,7 @@ describe('Logit javascript appender', function() {
 
         window.logit.log( 'message with dimensions', messageDimension );
 
-        this.requests.length.should.equal( 1 );
+        this.requests.should.have.length( 1 );
 
         var data = JSON.parse( this.requests[ 0 ].requestBody );
         should.exist( data.properties.x );
@@ -305,27 +311,6 @@ describe('Logit javascript appender', function() {
 
     it.skip('resuming message sending', function() {
 
-    });
-  });
-
-  describe('overloading the message buffer', function() {
-
-    describe.skip('will cause logging to pause, placing an error into the browser console, if available.', function() {
-
-      beforeEach(function() {
-        window.logit.init( 'abc123' );
-      });
-
-      it('will drop message and present console message if the buffer is to large', function() {
-        var fixture = this;
-
-        for ( var i = 0; i < 2010; i++) {
-          window.logit.log( 'test message' );
-        }
-
-        console.log.should.not.have.been.called;
-        console.error.should.not.have.been.called;
-      });
     });
   });
 });

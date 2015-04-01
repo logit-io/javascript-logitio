@@ -1,9 +1,129 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 function factory() {
 
+  function LogitRequest( uri, apikey, onSuccess, onRequestError ) {
+    this.uri = uri;
+    this.apiKey = apikey;
+    this.successCallback = onSuccess || function(){};
+    this.onRequestError = onRequestError || function(){};
+
+    this.xhr = this.createXhr();
+  }
+
+  function xmlHttpRequest() {
+    if ( window.XDomainRequest ) {
+      return new window.XDomainRequest();
+    }
+
+    if ( window.XMLHttpRequest ) {
+      return new window.XMLHttpRequest();
+    }
+
+    var xhr = null;
+    if ( window.ActiveXObject ) {
+      try { xhr = new ActiveXObject("Msxml2.XMLHTTP.6.0"); } catch (_) { }
+      try { xhr = new ActiveXObject("Msxml2.XMLHTTP.3.0"); } catch (_) { }
+      try { xhr = new ActiveXObject("Msxml2.XMLHTTP"); } catch (_) { }
+      try { xhr = new ActiveXObject("Microsoft.XMLHTTP"); } catch (_) { }
+    }
+
+    if ( xhr ) {
+      return xhr;
+    }
+
+    if ( console && console.error ) {
+      console.error( "This browser does not support XMLHttpRequest." );
+    }
+  }
+
+  LogitRequest.prototype = {
+    createXhr : function() {
+      var xhr = this.xhr = xmlHttpRequest();
+
+      if ( xhr ) {
+        this.openXhr();
+        xhr.timeout = 10000;
+
+        xhr.onreadystatechange = this.onreadystatechange.bind( this );
+        xhr.process = function() {};
+        xhr.ontimeout = function () {
+          var error = new Error();
+              error.code = xhr.status;
+              error.statusText = xhr.statusText;
+              error.uri = this.uri;
+
+              error.message = 'Request timed out';
+
+          return this.onRequestError( error );
+        };
+      }
+
+      return xhr;
+    },
+
+    openXhr : function() {
+      this.readyState = 0;
+      var xhr = this.xhr;
+
+      xhr.open( 'POST', this.uri, true );
+
+      if ( 'setRequestHeader' in xhr ) {
+        xhr.setRequestHeader( 'API-Key', this.apiKey );
+        xhr.setRequestHeader( 'Content-type', 'application/json' );
+      }
+    },
+
+    send : function(data) {
+      try {
+        this.xhr.send( JSON.stringify(data) );
+      } catch (e) {
+        this.onRequestError( e );
+      }
+    },
+
+    onreadystatechange : function() {
+      var xhr = this.xhr;
+      this.readyState = this.xhr.readyState;
+
+      if (xhr.readyState !== 4) return;
+
+      if ( xhr.status !== 202 ) {
+        if ( !xhr.responseText || xhr.responseText.charAt(0) !== '{' ) {
+          var error = new Error();
+              error.code = xhr.status;
+              error.statusText = xhr.statusText;
+              error.uri = this.uri;
+
+          if ( xhr.responseText.charAt(0) !== '{' ) {
+            error.message = 'No connection';
+          } else {
+            error.message = 'Invalid server response';
+          }
+
+          return this.onRequestError( error );
+        }
+      }
+
+      this.successCallback( xhr.responseText );
+    }
+  };
+
+  return LogitRequest;
+}
+
+(function ( root ) {
+  if ( typeof exports === 'object' ) module.exports = factory();
+  if ( typeof define === 'function' && define.amd ) define( factory );
+  root.logit = factory();
+}( window || this ));
+
+},{}],2:[function(require,module,exports){
+function factory() {
+    var LogitRequest = require('./logitRequest');
+
     var LOGIT_URI = 'http://remotehost';
     var sendInterval = 200;
-    var maxQueueSize = 10;
+    var maxQueueSize = 2000;
 
     var LOG_PRIORITIES = {
       EMERGENCY : 0,
@@ -26,106 +146,98 @@ function factory() {
       sending: false,
     };
 
-    function emergency(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.EMERGENCY, message, dimensions, opts );
-    }
+    function clone( src ) {
+      var out = {};
 
-    function error(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.ERROR, message, dimensions, opts );
-    }
+      if ( null !== src || "object" === typeof src ) {
+        for (var attr in src) {
+          if ( src.hasOwnProperty( attr )) {
+            out[ attr ] = src[ attr ];
+          }
+        }
+      }
 
-    function warn(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.WARN, message, dimensions, opts );
-    }
-
-    function info(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.INFO, message, dimensions, opts );
-    }
-
-    function log(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.LOG, message, dimensions, opts );
-    }
-
-    function debug(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.DEBUG, message, dimensions, opts );
-    }
-
-    function trace(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.TRACE, message, dimensions, opts );
-    }
-
-    function verbose(message, dimensions, opts) {
-      createMessage( LOG_PRIORITIES.VERBOSE, message, dimensions, opts );
+      return out;
     }
 
     function createMessage( priority, message, dimensions, opts ) {
-      if (!logit.initialised) {
+      if ( !logit.initialised && console && console.error ) {
         console.error( 'Logit.io plugin not initialised; Call logit.init() first.' );
         return;
       }
-      if ( typeof message === 'undefined' || message === '' ) return;
+
+      if ( typeof message === 'undefined' || message === '' ) {
+        return;
+      }
 
       opts = opts || {};
 
-      if ( priority > logit.verbosity && !opts.force ) return;
+      if ( priority > logit.verbosity && !opts.force ) {
+        return;
+      }
 
       dimensions = dimensions || {};
       if ( logit.defaultDimensions ) {
-          for (var k in logit.defaultDimensions) {
-              dimensions[k] = logit.defaultDimensions[k];
-          }
+        for (var k in logit.defaultDimensions) {
+          dimensions[k] = logit.defaultDimensions[k];
+        }
       }
 
       var message = {
-          timestamp : new Date().toISOString(),
-          message : message,
-          level : getPriorityName( priority ).toLowerCase(),
-          properties : dimensions
+        timestamp : new Date().toISOString(),
+        message : message,
+        level : getPriorityName( priority ).toLowerCase(),
+        properties : dimensions
       };
 
       if ( !logit.disableSending ) {
-          if ( queue.length == maxQueueSize ) {
-              queue.unshift(); //remove first item
+        if ( queue.length >= maxQueueSize ) {
+          queue.unshift( 1 ); // remove first 2 items
 
-              logit.disableSending = true;
+          logit.disableSending = true;
 
-              warn( 'Logit message queue message size exceeded', null, { force: true } );
-          }
+          moduleInterface.warn( 'Logit message queue message size exceeded', null, { force: true } );
+        }
 
-          queue.push( message );
+        queue.push( message );
 
-          checkAndSend();
+        checkAndSend();
       }
 
       if ( console && logit.logToConsole) {
-          var consoleFn;
-          if (priority <= 1) {
-              consoleFn = console.error;
-          } else if (priority == 2) {
-              consoleFn = console.warn || console.log;
-          } else if (priority == 3) {
-              consoleFn = console.info || console.log;
-          } else if (priority == 5) {
-              consoleFn = console.debug || console.log;
-          } else {
-              consoleFn = console.log;
-          }
-          var msg = message.message;
-          delete message.message;
-          var details = JSON.stringify(message);
-          consoleFn.call( console, getPriorityName(priority) + ': ' + msg + '; ' + details );
+        var consoleFn;
+
+        if (priority <= 1) {
+          consoleFn = console.error || console.log;
+        } else if (priority == 2) {
+          consoleFn = console.warn || console.log;
+        } else if (priority == 3) {
+          consoleFn = console.info || console.log;
+        } else if (priority == 5) {
+          consoleFn = console.debug || console.log;
+        } else {
+          consoleFn = console.log;
+        }
+
+        var msg = message.message;
+        delete message.message;
+        var details = JSON.stringify(message);
+        consoleFn.call( console, getPriorityName(priority) + ': ' + msg + '; ' + details );
       }
     };
 
     function checkAndSend() {
-      if ( !logit.disableSending && !logit.sending ) intervalSend();
+      if ( !logit.disableSending && !logit.sending ) {
+        intervalSend();
+      }
     }
 
-    function intervalSend(){
-      if ( queue.length && queue.length > 0 && !logit.pausedSending ) {
+    function intervalSend() {
+      if ( queue.length && queue.length > 0 && !logit.disableSending ) {
         logit.sending = true;
         var message = queue.shift(); // take the first message off the queue
-        var request = new LogitRequest();
+        var request = new LogitRequest( LOGIT_URI, logit.apiKey, logit.onSuccess );
+
         request.send( message );
 
         setTimeout( intervalSend, logit.sendInterval );
@@ -137,8 +249,8 @@ function factory() {
     }
 
     function onRequestError( error ) {
-      if (error.status == 0) {
-        warn( error.message, null, { force: true } );
+      if ( error.status == 0 ) {
+        moduleInterface.warn( error.message, null, { force: true } );
       }
     }
 
@@ -154,99 +266,7 @@ function factory() {
       return name;
     }
 
-    function LogitRequest() {
-      this.uri = LOGIT_URI;
-      this.apiKey = logit.apiKey;
-      this.successCallback = logit.onSuccess || function(){};
-
-      this.xhr = this.createXhr();
-    }
-
-    LogitRequest.prototype = {
-      createXhr : function() {
-          var xhr = this.xhr = new XMLHttpRequest();
-          this.openXhr();
-          xhr.timeout = 10000;
-
-          if ( 'withCredentials' in xhr ) {
-            xhr.onreadystatechange = this.onreadystatechange.bind(this);
-
-          } else if ( window.XDomainRequest ) {
-            xhr.ontimeout = function () {
-              var error = new Error();
-                  error.code = xhr.status;
-                  error.statusText = xhr.statusText;
-                  error.uri = this.uri;
-
-                  error.message = 'Request timed out';
-
-              return this.failureCallback( error );
-            };
-          }
-
-          if (!xhr) {
-            log( 'CORS not supported' );
-            return;
-          }
-
-          return xhr;
-      },
-
-      openXhr : function() {
-        this.readyState = 0;
-        var xhr = this.xhr;
-
-        if ( 'withCredentials' in xhr ) {
-          xhr.open( 'POST', this.uri, true );
-        } else if ( window.XDomainRequest ) {
-          xhr = this.xhr = new window.XDomainRequest();
-          xhr.open( 'POST', this.uri );
-        }
-
-        xhr.setRequestHeader( 'API-Key', this.apiKey );
-        xhr.setRequestHeader( 'Content-type', 'application/json' );
-      },
-
-      send : function(data) {
-        try {
-          this.xhr.send(JSON.stringify(data));
-        } catch (e) {
-          this.failureCallback(e);
-        }
-      },
-
-      onreadystatechange : function() {
-        var xhr = this.xhr;
-        this.readyState = this.xhr.readyState;
-
-        if (xhr.readyState !== 4) return;
-
-        if ( xhr.status !== 202 ) {
-          if ( !xhr.responseText || xhr.responseText.charAt(0) !== '{' ) {
-              var error = new Error();
-                  error.code = xhr.status;
-                  error.statusText = xhr.statusText;
-                  error.uri = this.uri;
-
-              if ( xhr.responseText.charAt(0) !== '{' ) {
-                  error.message = 'No connection';
-              } else {
-                  error.message = 'Invalid server response';
-              }
-
-              return this.failureCallback( error );
-          }
-        }
-
-        this.successCallback( xhr.responseText );
-      },
-
-      failureCallback: function( e ) {
-        onRequestError( e );
-      }
-    };
-
-    return {
+    var moduleInterface = {
 
       init: function( apiKey, options ) {
         if ( typeof apiKey === 'object' ) {
@@ -266,12 +286,12 @@ function factory() {
       },
 
       pauseSending: function() {
-        logit.pausedSending = true;
+        logit.disableSending = true;
       },
 
       resumeSending: function() {
-        if( logit.pausedSending ) {
-          logit.pausedSending = false;
+        if( logit.disableSending ) {
+          logit.disableSending = false;
           checkAndSend();
         }
       },
@@ -282,48 +302,35 @@ function factory() {
 
       setVerbosity: function(verbosity) {
         if (typeof verbosity == 'string' && typeof LOG_PRIORITIES[ verbosity.toUpperCase() ] != 'undefined'){
-            verbosity = LOG_PRIORITIES[ verbosity.toUpperCase() ];
+          verbosity = LOG_PRIORITIES[ verbosity.toUpperCase() ];
         }
 
         if (typeof verbosity != 'number' || verbosity < LOG_PRIORITIES.EMERGENCY || verbosity > LOG_PRIORITIES.VERBOSE) {
-            throw new Error( 'verbosity value must be an integer between ' + LOG_PRIORITIES.EMERGENCY + ' and ' + LOG_PRIORITIES.VERBOSE );
+          throw new Error( 'verbosity value must be an integer between ' + LOG_PRIORITIES.EMERGENCY + ' and ' + LOG_PRIORITIES.VERBOSE );
         }
 
         if ( logit.verbosity == verbosity ) return;
 
-        info( 'Set logit verbosity', {
-           previous: getPriorityName( logit.verbosity ).toLowerCase(),
-           current: getPriorityName( verbosity ).toLowerCase()
+        this.info( 'Set logit verbosity', {
+          previous: getPriorityName( logit.verbosity ).toLowerCase(),
+          current: getPriorityName( verbosity ).toLowerCase()
         }, {
-            force: true
+          force: true
         });
 
         logit.verbosity = verbosity;
       },
 
-      emergency: emergency,
-      error: error,
-      warn: warn,
-      info: info,
-      log: log,
-      debug: debug,
-      trace: trace,
-      verbose: verbose,
-
       LOG_PRIORITIES: LOG_PRIORITIES
     };
 
-    function clone( src ) {
-      var out = {};
-
-      if ( null !== src || "object" === typeof src ) {
-        for (var attr in src) {
-          if ( src.hasOwnProperty( attr )) out[ attr ] = src[ attr ];
-        }
+    for (var priority in LOG_PRIORITIES ) {
+      moduleInterface[ priority.toLowerCase() ] = function( message, dimensions, opts ) {
+        createMessage( LOG_PRIORITIES[ priority ], message, dimensions, opts );
       }
-
-      return out;
     }
+
+    return moduleInterface;
 }
 
 (function ( root ) {
@@ -332,4 +339,4 @@ function factory() {
   root.logit = factory();
 }( window || this ));
 
-},{}]},{},[1]);
+},{"./logitRequest":1}]},{},[2]);

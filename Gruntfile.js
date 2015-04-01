@@ -19,13 +19,17 @@ module.exports = function( grunt ) {
     }
 
     // actual config
-
+    var pkg = grunt.file.readJSON('package.json');
+    var env = process.env;
     var config = {
+        pkg: pkg,
+        env: env,
+        buildNumber: pkg.version + '.' + ( env.CI_BUILD_NUMBER || 0 ),
 
-        pkg: grunt.file.readJSON('package.json')
-
-      , env: process.env
-
+        sauce: {
+          username: 'mattonfoot',
+          accesskey: 'e3a72961-ea21-4c07-9a4c-362a00aebc4d',
+        }
     };
 
     grunt.util._.extend(config, loadConfig( './tasks/options/', config ));
@@ -53,6 +57,7 @@ module.exports = function( grunt ) {
     // test
     grunt.registerTask('coverage'     , [ 'clean:coverage', 'blanket', 'copy:coverage', 'mochaTest:instrumented', 'mochaTest:lcov', 'mochaTest:coverage' ]);
     grunt.registerTask('test'         , [ /* 'jshint', 'eslint', 'mochaTest:test' */ ]);
+    grunt.registerTask('test:browser' , [ 'build:test', 'connect:test', 'saucelabs-mocha:test' ]);
 
     // build
     grunt.registerTask('build'        , [ 'browserify' ]);
@@ -62,7 +67,7 @@ module.exports = function( grunt ) {
     // grunt.registerTask('default'   , [ 'watch' ]);
 
     // travis-ci
-    grunt.registerTask('ci'           , [ 'coverage', 'coveralls' ]);
+    grunt.registerTask('ci'           , [ 'test:browser', 'coverage', 'coveralls' ]);
     grunt.registerTask('complexity'   , [ 'complexity' ]);
 
 };
