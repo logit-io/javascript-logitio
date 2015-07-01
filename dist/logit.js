@@ -1,30 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var LOG_PRIORITIES = {
-  EMERGENCY: 0,
-  ERROR: 1,
-  WARN: 2,
-  INFO: 3,
-  LOG: 4,
-  DEBUG: 5,
-  TRACE: 6,
-  VERBOSE: 7
-};
-
-(function ( root ) {
-  'use strict';
-
-  if ( typeof exports === 'object' ) {
-    module.exports = LOG_PRIORITIES;
-  }
-
-  if ( typeof define === 'function' && define.amd ) {
-    define( LOG_PRIORITIES );
-  }
-
-  root.logit.LOG_PRIORITIES = LOG_PRIORITIES;
-}( window ));
-
-},{}],2:[function(require,module,exports){
 function factory( ActiveXObject ) {
   'use strict';
 
@@ -162,15 +136,24 @@ function factory( ActiveXObject ) {
     define( factory );
   }
 
-  root.logit.LogitRequest = factory( ActiveXObject );
+  (root.logit = root.logit || {}).LogitRequest = factory( ActiveXObject );
 }( window, window.ActiveXObject ));
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 var LogitRequest = require('./logitRequest');
 
 var LOGIT_URI = 'http://remotehost';
 
-var LOG_PRIORITIES = require('./log_priorities');
+var LOG_PRIORITIES = {
+  EMERGENCY: 0,
+  ERROR: 1,
+  WARN: 2,
+  INFO: 3,
+  LOG: 4,
+  DEBUG: 5,
+  TRACE: 6,
+  VERBOSE: 7
+};
 
 function getConsoleFn( priority ) {
   'use strict';
@@ -320,7 +303,8 @@ function factory() {
     dimensions = dimensions || {};
 
     if ( !logit.initialised ) {
-      getConsoleFn( LOG_PRIORITIES.ERROR )( 'Logit.io plugin not initialised; Call logit.init() first.' );
+      var consoleFn = getConsoleFn( LOG_PRIORITIES.ERROR );
+      consoleFn.call( console, 'Logit.io plugin not initialised; Call logit.init() first.' );
       return null;
     }
 
@@ -423,4 +407,4 @@ function factory() {
   root.logit = factory();
 }( window ));
 
-},{"./log_priorities":1,"./logitRequest":2}]},{},[3]);
+},{"./logitRequest":1}]},{},[2]);
