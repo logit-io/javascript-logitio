@@ -5,8 +5,7 @@ module.exports = function() {
           eslintrc  : true
       },
 
-      src         : [ 'lib/**/*.js' ],
-      test        : [ 'test/**/*.js' ]
+      src         : [ 'lib/**/*.js' ]
     };
 
 };

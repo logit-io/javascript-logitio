@@ -4,9 +4,8 @@ module.exports = function() {
       options: {
           jshintrc  : '.jshintrc'
       },
-      
-      src         : [ 'lib/**/*.js' ],
-      test        : [ 'test/**/*.js' ]
+
+      src         : [ 'lib/**/*.js' ]
     };
 
 };

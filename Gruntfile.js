@@ -56,7 +56,7 @@ module.exports = function( grunt ) {
 
     // test
     grunt.registerTask('coverage'     , [ 'clean:coverage', 'blanket', 'copy:coverage', 'mochaTest:instrumented', 'mochaTest:lcov', 'mochaTest:coverage' ]);
-    grunt.registerTask('test'         , [ /* 'jshint', 'eslint', 'mochaTest:test' */ ]);
+    grunt.registerTask('test'         , [ 'jshint', 'eslint', 'mochaTest:test' ]);
     grunt.registerTask('test:browser' , [ 'build:test', 'connect:test', 'saucelabs-mocha:test' ]);
 
     // build
