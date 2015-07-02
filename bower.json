@@ -31,8 +31,5 @@
     "bower_components",
     "tasks",
     "test"
-  ],
-  "dependencies": {
-    "tracekit": "~0.2.1"
-  }
+  ]
 }
