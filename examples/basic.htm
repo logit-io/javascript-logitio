@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Logit IO javascript appender</title>
+</head>
+<body>
+  <p><label for="apikey">APIKEY:</label> <input name="apikey" id="apikey" /></p>
+  <p><label for="msg">Message:</label> <input name="msg" id="msg" /></p>
+  <p><button id="sendMessage">Send Message</button></p>
+
+  <script src="../dist/logit.js"></script>
+  <script>
+
+    document.getElementById('sendMessage').onclick = function( ev ) {
+      var apikey = document.getElementById('apikey').value;
+      var msg = document.getElementById('msg').value;
+      
+      window.logit.init( apikey );
+
+      console.log( 'sending', msg );
+
+      window.logit.log( msg );
+    };
+</script>
+</body>
+</html>
