@@ -14,6 +14,7 @@ module.exports = function( config ) {
           }
         },
         './browser',
+        './examples',
         './node_modules'
       ],
       debug: true
