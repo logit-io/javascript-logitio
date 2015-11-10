@@ -265,7 +265,7 @@ function factory( logit ) {
 var LogitRequest = require('./logitRequest');
 var LogitWatch = require('./logitWatch');
 
-var LOGIT_URI = 'http://remotehost:9001';
+var LOGIT_URI = 'https://api.logit.io/javascript/v1';
 
 var LOG_PRIORITIES = {
   EMERGENCY: 0,
