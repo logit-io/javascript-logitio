@@ -405,6 +405,8 @@ function factory() {
       logit.verbosity = verbosity;
     },
 
+    getPriorityName: getPriorityName,
+
     LOG_PRIORITIES: LOG_PRIORITIES
   };
 
@@ -513,7 +515,7 @@ function factory() {
     }
   }
 
-  moduleInterface.watch = LogitWatch( moduleInterface );
+  moduleInterface.watch = new LogitWatch( moduleInterface );
 
   return moduleInterface;
 }

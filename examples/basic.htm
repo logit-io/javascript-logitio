@@ -9,13 +9,13 @@
   <p><label for="msg">Message:</label> <input name="msg" id="msg" /></p>
   <p><button id="sendMessage">Send Message</button></p>
 
-  <script src="../dist/logit.js"></script>
+  <script src="./logit.js"></script>
   <script>
 
     document.getElementById('sendMessage').onclick = function( ev ) {
       var apikey = document.getElementById('apikey').value;
       var msg = document.getElementById('msg').value;
-      
+
       window.logit.init( apikey );
 
       console.log( 'sending', msg );
