@@ -11,12 +11,16 @@ This JavaScript Plugin provides websites with an interface to send debug informa
 
 # Installing
 
-Logit.io can be installed with:
-
-[Bower](http://bower.io/):
+Logit.io can be installed with bower
 
 ```
 bower install --save logitio
+```
+
+or pulled from our cdn
+
+```html
+<script src="https://resources.logit.io/logit.js"></script>
 ```
 
 # Using the plugin
