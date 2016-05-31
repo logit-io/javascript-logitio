@@ -3,8 +3,6 @@ Logit.io JavaScript Plugin
 
 This JavaScript Plugin provides websites with an interface to send debug information to a [Logit.io](http://logit.io/) endpoint.
 
-[Logit.io](http://logit.io/) is [TODO]
-
 ## Contents
 
 * [Installing](#installing)
