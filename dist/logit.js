@@ -1,4 +1,92 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+function factory( logit ) {
+  'use strict';
+
+  var xhrIndex = 0;
+
+  function wrapXHR( xhr ) {
+    xhr.watchedByLogit = true;
+
+    var fn = xhr.onreadystatechange;
+    xhr.onreadystatechange = function( event ) {
+      var message = 'Unknown state found for XHR';
+      switch (this.readyState) {
+        case 0:
+          xhrIndex++;
+          message = 'UNSENT - Client has been created. open() not called yet.';
+          break;
+        case 1:
+          message = 'OPENED - open() has been called.';
+          break;
+        case 2:
+          message = 'HEADERS_RECEIVED - send() has been called, and headers and status are available.';
+          break;
+        case 3:
+          message = 'LOADING - Downloading; responseText holds partial data.';
+          break;
+        case 4:
+          message = 'DONE - The operation is complete.';
+          break;
+      }
+
+      logit.log(message, {
+          xhrRequestId: xhrIndex,
+          status: this.status,
+          statusText: this.statusText,
+          type: this.responseType,
+          url: this.responseURL,
+          ajaxErrorMessage: this.status && (this.status < 200 || this.status > 299) ? this.response : undefined,
+          contentType: this.contentType,
+          requestData: this.response && this.response.slice ? this.response.slice(0, 10240) : undefined,
+          responseData: this.responseText && this.responseText.toString().slice ? this.responseText.toString().slice(0, 10240) : undefined,
+          activeTarget: event.target && event.target.activeElement ? event.target.activeElement.outerHTML : undefined
+      });
+
+      return fn.call( this, event );
+    };
+
+    return xhr;
+  }
+
+  function handleJQueryAjaxError( event, jqXHR, ajaxSettings, thrownError ) {
+    var message = 'AJAX Error';
+
+    // ignore ajax abort
+    if ( !jqXHR.getAllResponseHeaders() ) {
+      return;
+    }
+
+    logit.error( thrownError || event.type, {
+        status: jqXHR.status,
+        statusText: jqXHR.statusText,
+        type: ajaxSettings.type,
+        url: ajaxSettings.url,
+        ajaxErrorMessage: message,
+        contentType: ajaxSettings.contentType,
+        requestData: ajaxSettings.data && ajaxSettings.data.slice ? ajaxSettings.data.slice(0, 10240) : undefined,
+        responseData: jqXHR.responseText && jqXHR.responseText.slice ? jqXHR.responseText.slice(0, 10240) : undefined,
+        activeTarget: event.target && event.target.activeElement ? event.target.activeElement.outerHTML : undefined
+      });
+  }
+
+  if (window.$) {
+    var $document = $(window.document);
+
+    if ( $document ) {
+      $document.ajaxError( handleJQueryAjaxError );
+    }
+  }
+
+  return wrapXHR;
+}
+
+(function () {
+  'use strict';
+
+  module.exports = factory;
+}());
+
+},{}],2:[function(require,module,exports){
 function factory( ActiveXObject ) {
   'use strict';
 
@@ -131,55 +219,32 @@ function factory( ActiveXObject ) {
   module.exports = factory( ActiveXObject );
 }( window, window.ActiveXObject ));
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 require('tracekit');
 var tracekit = TraceKit;//.noConflict();
 var queryString = require('query-string');
-var $document;
-
-if (window.$) {
-  $document = $(window.document);
-}
 
 function forEach( arr, cb ) {
+  'use strict';
+
   for ( var i = 0; i < arr.length; i++ ) {
-    cb.call( set[i], i, set[i] );
+    cb.call( arr[ i ], i, arr [ i ] );
   }
 }
 
 function getViewPort () {
-    var doc = document.documentElement;
-    var body = document.body;
-    var x = window.innerWidth || doc.clientWidth || body.clientWidth;
-    var y = window.innerHeight || doc.clientHeight || body.clientHeight;
+  'use strict';
 
-    return { width: x, height: y };
-  }
+  var doc = document.documentElement;
+  var body = document.body;
+  var x = window.innerWidth || doc.clientWidth || body.clientWidth;
+  var y = window.innerHeight || doc.clientHeight || body.clientHeight;
 
+  return { width: x, height: y };
+}
 
 function factory( logit ) {
   'use strict';
-
-  function handleJQueryAjaxError( event, jqXHR, ajaxSettings, thrownError ) {
-    var message = 'AJAX Error';
-
-    // ignore ajax abort
-    if ( !jqXHR.getAllResponseHeaders() ) {
-      return;
-    }
-
-    logit.error( thrownError || event.type, {
-        status: jqXHR.status,
-        statusText: jqXHR.statusText,
-        type: ajaxSettings.type,
-        url: ajaxSettings.url,
-        ajaxErrorMessage: message,
-        contentType: ajaxSettings.contentType,
-        requestData: ajaxSettings.data && ajaxSettings.data.slice ? ajaxSettings.data.slice(0, 10240) : undefined,
-        responseData: jqXHR.responseText && jqXHR.responseText.slice ? jqXHR.responseText.slice(0, 10240) : undefined,
-        activeTarget: event.target && event.target.activeElement ? event.target.activeElement.outerHTML : undefined
-      });
-  }
 
   function handleException( stackTrace ) {
     var stack = [];
@@ -229,7 +294,7 @@ function factory( logit ) {
         'Platform': navigator.platform
       },
       'Request': {
-        'Url': [location.protocol, '//', location.host, location.pathname, location.hash].join(''),
+        'Url': [ location.protocol, '//', location.host, location.pathname, location.hash ].join(''),
         'QueryString': qs,
         'Headers': {
           'User-Agent': navigator.userAgent,
@@ -246,24 +311,21 @@ function factory( logit ) {
     tracekit.report.subscribe( handleException );
 
     tracekit.extendToAsynchronousCallbacks();
-
-    if ( $document ) {
-      $document.ajaxError( handleJQueryAjaxError );
-    }
   }
 
   return LogitWatch;
 }
 
-(function ( root ) {
+(function () {
   'use strict';
 
   module.exports = factory;
 }());
 
-},{"query-string":4,"tracekit":5}],3:[function(require,module,exports){
+},{"query-string":5,"tracekit":7}],4:[function(require,module,exports){
 var LogitRequest = require('./logitRequest');
 var LogitWatch = require('./logitWatch');
+var LogitAjaxWatch = require('./logitAjaxWatch');
 
 var LOGIT_URI = 'https://api.logit.io/javascript/v1';
 
@@ -516,6 +578,7 @@ function factory() {
   }
 
   moduleInterface.watch = new LogitWatch( moduleInterface );
+  moduleInterface.wrapXhr = new LogitAjaxWatch( moduleInterface );
 
   return moduleInterface;
 }
@@ -534,11 +597,12 @@ function factory() {
   root.logit = factory();
 }( window ));
 
-},{"./logitRequest":1,"./logitWatch":2}],4:[function(require,module,exports){
+},{"./logitAjaxWatch":1,"./logitRequest":2,"./logitWatch":3}],5:[function(require,module,exports){
 'use strict';
+var strictUriEncode = require('strict-uri-encode');
 
-exports.extract = function (maybeUrl) {
-	return maybeUrl.split('?')[1] || '';
+exports.extract = function (str) {
+	return str.split('?')[1] || '';
 };
 
 exports.parse = function (str) {
@@ -554,10 +618,13 @@ exports.parse = function (str) {
 
 	return str.split('&').reduce(function (ret, param) {
 		var parts = param.replace(/\+/g, ' ').split('=');
-		var key = parts[0];
-		var val = parts[1];
+		// Firefox (pre 40) decodes `%3D` to `=`
+		// https://github.com/sindresorhus/query-string/pull/37
+		var key = parts.shift();
+		var val = parts.length > 0 ? parts.join('=') : undefined;
 
 		key = decodeURIComponent(key);
+
 		// missing `=` should be `null`:
 		// http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
 		val = val === undefined ? null : decodeURIComponent(val);
@@ -580,15 +647,25 @@ exports.stringify = function (obj) {
 
 		if (Array.isArray(val)) {
 			return val.sort().map(function (val2) {
-				return encodeURIComponent(key) + '=' + encodeURIComponent(val2);
+				return strictUriEncode(key) + '=' + strictUriEncode(val2);
 			}).join('&');
 		}
 
-		return encodeURIComponent(key) + '=' + encodeURIComponent(val);
+		return strictUriEncode(key) + '=' + strictUriEncode(val);
+	}).filter(function (x) {
+		return x.length > 0;
 	}).join('&') : '';
 };
 
-},{}],5:[function(require,module,exports){
+},{"strict-uri-encode":6}],6:[function(require,module,exports){
+'use strict';
+module.exports = function (str) {
+	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
+		return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+	});
+};
+
+},{}],7:[function(require,module,exports){
 (function (global){
 /*
  TraceKit - Cross brower stack traces - github.com/csnover/TraceKit
@@ -1743,4 +1820,4 @@ window.TraceKit = TraceKit;
 }(typeof window !== 'undefined' ? window : global));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[3]);
+},{}]},{},[4]);
